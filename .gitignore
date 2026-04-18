@@ -1,3 +1,25 @@
+# Sistema operativo
 .DS_Store
 Thumbs.db
 *.log
+
+# Node.js
+node_modules/
+npm-debug.log*
+
+# Coverage
+coverage/
+.nyc_output/
+
+# Vitest
+.vitest-cache/
+
+# Editor
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Entorno
+.env
+.env.local

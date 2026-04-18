@@ -100,6 +100,11 @@
       color: var(--text);
       border: 1px solid var(--border);
     }
+    button.btn.danger {
+      background: rgba(248,81,73,0.15);
+      color: var(--red);
+      border: 1px solid var(--red);
+    }
 
     .result-grid {
       display: grid;
@@ -182,6 +187,86 @@
 
     .error-msg { color: var(--red); font-size: 0.85rem; padding: 8px 0; }
     .info-msg { color: var(--text-dim); font-size: 0.85rem; padding: 8px 0; }
+
+    /* Vulnerabilidades */
+    .vuln-list { list-style: none; padding: 0; margin-top: 8px; }
+    .vuln-item {
+      display: flex; align-items: flex-start; gap: 10px; padding: 10px;
+      border-radius: 6px; margin-bottom: 8px; font-size: 0.85rem;
+    }
+    .vuln-high { background: rgba(248,81,73,0.1); border: 1px solid rgba(248,81,73,0.3); }
+    .vuln-medium { background: rgba(210,153,34,0.1); border: 1px solid rgba(210,153,34,0.3); }
+    .vuln-low { background: rgba(88,166,255,0.1); border: 1px solid rgba(88,166,255,0.3); }
+    .vuln-icon { font-size: 1rem; flex-shrink: 0; margin-top: 1px; }
+    .vuln-title { font-weight: 600; margin-bottom: 2px; }
+    .vuln-high .vuln-title { color: var(--red); }
+    .vuln-medium .vuln-title { color: var(--yellow); }
+    .vuln-low .vuln-title { color: var(--accent); }
+    .vuln-desc { color: var(--text-dim); font-size: 0.82rem; }
+    .no-vulns { color: var(--green); font-size: 0.85rem; padding: 8px 0; }
+
+    /* Countdown timer */
+    .countdown-badge {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 4px 10px; border-radius: 4px; font-size: 0.82rem;
+      font-family: 'Fira Code', monospace;
+      background: rgba(63,185,80,0.1); color: var(--green);
+      border: 1px solid rgba(63,185,80,0.3);
+    }
+    .countdown-badge.expiring { background: rgba(210,153,34,0.1); color: var(--yellow); border-color: rgba(210,153,34,0.3); }
+    .countdown-badge.expired { background: rgba(248,81,73,0.1); color: var(--red); border-color: rgba(248,81,73,0.3); }
+
+    /* Historial */
+    .history-item {
+      background: var(--bg); border: 1px solid var(--border); border-radius: 6px;
+      padding: 12px 14px; margin-bottom: 10px; cursor: pointer;
+      transition: border-color 0.15s;
+    }
+    .history-item:hover { border-color: var(--accent); }
+    .history-token {
+      font-family: 'Fira Code', monospace; font-size: 0.75rem;
+      color: var(--text-dim); white-space: nowrap; overflow: hidden;
+      text-overflow: ellipsis; margin-bottom: 6px;
+    }
+    .history-meta { font-size: 0.78rem; color: var(--text-dim); display: flex; gap: 12px; flex-wrap: wrap; }
+    .history-meta span { display: flex; align-items: center; gap: 4px; }
+    .history-alg { color: var(--orange); font-weight: 600; }
+    .history-sub { color: var(--accent); }
+    .empty-history { color: var(--text-dim); text-align: center; padding: 30px; }
+
+    /* Secret strength */
+    .secret-strength {
+      margin-top: 6px; font-size: 0.78rem; display: flex; align-items: center; gap: 8px;
+    }
+    .strength-bar {
+      flex: 1; height: 4px; background: var(--border); border-radius: 2px; overflow: hidden;
+    }
+    .strength-fill { height: 100%; border-radius: 2px; transition: width 0.3s, background 0.3s; }
+    .strength-weak .strength-fill { width: 33%; background: var(--red); }
+    .strength-medium .strength-fill { width: 66%; background: var(--yellow); }
+    .strength-strong .strength-fill { width: 100%; background: var(--green); }
+    .strength-label { min-width: 60px; }
+    .strength-weak .strength-label { color: var(--red); }
+    .strength-medium .strength-label { color: var(--yellow); }
+    .strength-strong .strength-label { color: var(--green); }
+
+    /* Tooltip */
+    .has-tooltip { position: relative; cursor: help; border-bottom: 1px dashed var(--text-dim); }
+    .tooltip-text {
+      display: none; position: absolute; bottom: 125%; left: 50%; transform: translateX(-50%);
+      background: #1c2128; color: var(--text); padding: 6px 10px; border-radius: 6px;
+      font-size: 0.78rem; white-space: nowrap; border: 1px solid var(--border); z-index: 10;
+    }
+    .has-tooltip:hover .tooltip-text { display: block; }
+
+    /* nbf warning */
+    .nbf-warn { color: var(--yellow); }
+
+    /* Responsive textarea */
+    @media (max-width: 480px) {
+      header h1 { font-size: 1.5rem; }
+      .tab-btn { padding: 8px 12px; font-size: 0.85rem; }
+    }
   </style>
 </head>
 <body>
@@ -194,13 +279,14 @@
     <button class="tab-btn active" onclick="showTab('decode')">Decodificar</button>
     <button class="tab-btn" onclick="showTab('verify')">Verificar firma</button>
     <button class="tab-btn" onclick="showTab('generate')">Generar JWT</button>
+    <button class="tab-btn" onclick="showTab('history')">Historial</button>
   </div>
 
   <!-- TAB: DECODIFICAR -->
   <div id="tab-decode" class="tab-panel active">
     <div class="card">
       <h3>Token JWT</h3>
-      <textarea id="decode-input" rows="5" placeholder="Pega aquí tu JWT: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."></textarea>
+      <textarea id="decode-input" rows="5" placeholder="Pega aquí tu JWT: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..." autocomplete="off" spellcheck="false"></textarea>
       <div style="display:flex;gap:8px;flex-wrap:wrap">
         <button class="btn" onclick="decodeJWT()">Decodificar</button>
         <button class="btn secondary" onclick="loadExample()">Cargar ejemplo</button>
@@ -227,7 +313,7 @@
         <div class="card col3">
           <div class="part-header">
             <div class="dot dot-blue"></div>
-            <h3>Signature (raw)</h3>
+            <h3>Signature (raw base64url)</h3>
           </div>
           <div id="sig-view" class="json-view" style="color:var(--text-dim)"></div>
         </div>
@@ -235,6 +321,11 @@
       <div class="card">
         <h3>Claims importantes</h3>
         <div id="claims-view"></div>
+        <div id="exp-countdown" style="margin-top:10px"></div>
+      </div>
+      <div class="card" id="vuln-section">
+        <h3>Analisis de seguridad</h3>
+        <div id="vuln-view"></div>
       </div>
     </div>
     <div id="decode-error" class="error-msg" style="display:none"></div>
@@ -244,13 +335,17 @@
   <div id="tab-verify" class="tab-panel">
     <div class="card">
       <h3>Token JWT</h3>
-      <textarea id="verify-token" rows="5" placeholder="Pega aquí tu JWT..."></textarea>
+      <textarea id="verify-token" rows="5" placeholder="Pega aquí tu JWT..." autocomplete="off" spellcheck="false"></textarea>
     </div>
     <div class="card">
       <h3>Clave secreta / Public Key</h3>
-      <input type="password" id="verify-secret" placeholder="Clave secreta para HS256/HS384/HS512 (o PEM para RS256)">
+      <input type="password" id="verify-secret" placeholder="Clave secreta para HS256/HS384/HS512 (o PEM para RS256)" autocomplete="off">
+      <div id="verify-secret-strength" class="secret-strength" style="display:none">
+        <div class="strength-bar"><div class="strength-fill"></div></div>
+        <span class="strength-label"></span>
+      </div>
       <div style="margin-top:8px;font-size:0.82rem;color:var(--text-dim)">
-        Para HS*: escribe el secret en texto plano. Para RS256/RS384/RS512: pega la clave pública PEM.
+        Para HS*: escribe el secret en texto plano. Para RS256/RS384/RS512: pega la clave publica PEM.
       </div>
       <button class="btn" onclick="verifyJWT()" style="margin-top:12px">Verificar firma</button>
     </div>
@@ -264,7 +359,7 @@
   <!-- TAB: GENERAR -->
   <div id="tab-generate" class="tab-panel">
     <div class="card">
-      <h3>Configuración</h3>
+      <h3>Configuracion</h3>
       <div class="form-grid">
         <div class="form-group">
           <label>Algoritmo</label>
@@ -275,18 +370,23 @@
           </select>
         </div>
         <div class="form-group">
-          <label>Expiración</label>
+          <label>Expiracion</label>
           <select id="gen-exp">
+            <option value="900">15 minutos</option>
             <option value="3600">1 hora</option>
-            <option value="86400">1 día</option>
+            <option value="86400">1 dia</option>
             <option value="604800">1 semana</option>
-            <option value="2592000">30 días</option>
-            <option value="0">Sin expiración</option>
+            <option value="2592000">30 dias</option>
+            <option value="0">Sin expiracion</option>
           </select>
         </div>
         <div class="form-group" style="grid-column:span 2">
           <label>Clave secreta</label>
-          <input type="password" id="gen-secret" placeholder="Escribe tu clave secreta (mínimo 16 caracteres recomendado)">
+          <input type="password" id="gen-secret" placeholder="Escribe tu clave secreta (minimo 16 caracteres recomendado)" autocomplete="off" oninput="updateSecretStrength('gen-secret','gen-secret-strength')">
+          <div id="gen-secret-strength" class="secret-strength" style="display:none">
+            <div class="strength-bar"><div class="strength-fill"></div></div>
+            <span class="strength-label"></span>
+          </div>
         </div>
       </div>
     </div>
@@ -294,12 +394,12 @@
       <h3>Claims (JSON)</h3>
       <textarea id="gen-claims" class="claims-editor" rows="8" placeholder='{
   "sub": "1234567890",
-  "name": "Juan Pérez",
+  "name": "Juan Perez",
   "role": "admin",
   "iat": 1713000000
 }'>{
   "sub": "user_123",
-  "name": "Juan Pérez",
+  "name": "Juan Perez",
   "role": "admin"
 }</textarea>
       <button class="btn" onclick="generateJWT()">Generar JWT</button>
@@ -314,11 +414,30 @@
           <div><strong style="color:var(--purple);font-size:0.82rem">PAYLOAD</strong><div id="gen-payload-view" class="json-view" style="margin-top:8px"></div></div>
         </div>
       </div>
+      <div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap">
+        <button class="btn secondary" onclick="sendToDecoder()">Abrir en Decodificar</button>
+        <button class="btn secondary" onclick="sendToVerify()">Abrir en Verificar</button>
+      </div>
     </div>
     <div id="gen-error" class="error-msg" style="display:none"></div>
   </div>
 
+  <!-- TAB: HISTORIAL -->
+  <div id="tab-history" class="tab-panel">
+    <div class="card" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px">
+      <h3 style="margin:0">Ultimos tokens decodificados (localStorage)</h3>
+      <button class="btn danger" onclick="clearHistory()" style="margin:0;padding:6px 14px;font-size:0.82rem">Limpiar historial</button>
+    </div>
+    <div id="history-list"></div>
+  </div>
+
   <script>
+    // ── Constantes ────────────────────────────────────────────────────────────
+    const MAX_HISTORY = 10;
+    const STORAGE_KEY = 'jwt_debug_history';
+    const WEAK_SECRETS = ['secret','password','123456','test','admin','jwt','token','key','my_secret','mysecret','changeme','letmein'];
+    let countdownInterval = null;
+
     // ── Utilidades base64url ──────────────────────────────────────────────────
     function base64urlDecode(str) {
       str = str.replace(/-/g, '+').replace(/_/g, '/');
@@ -338,17 +457,29 @@
       catch { return null; }
     }
 
+    // ── Sanitizacion XSS ────────────────────────────────────────────────────
+    function escapeHtml(str) {
+      if (str === null || str === undefined) return '';
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+    }
+
     // ── Sintax highlight JSON ────────────────────────────────────────────────
     function colorizeJSON(obj) {
       const json = JSON.stringify(obj, null, 2);
       return json.replace(
         /("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?)/g,
         match => {
-          if (/^".*":$/.test(match)) return `<span class="json-key">${match}</span>`;
-          if (/^"/.test(match))       return `<span class="json-str">${match}</span>`;
-          if (/true|false/.test(match)) return `<span class="json-bool">${match}</span>`;
-          if (/null/.test(match))     return `<span class="json-null">${match}</span>`;
-          return `<span class="json-num">${match}</span>`;
+          const safe = escapeHtml(match);
+          if (/^".*":$/.test(match)) return `<span class="json-key">${safe}</span>`;
+          if (/^"/.test(match))       return `<span class="json-str">${safe}</span>`;
+          if (/true|false/.test(match)) return `<span class="json-bool">${safe}</span>`;
+          if (/null/.test(match))     return `<span class="json-null">${safe}</span>`;
+          return `<span class="json-num">${safe}</span>`;
         }
       );
     }
@@ -356,17 +487,174 @@
     // ── Tabs ─────────────────────────────────────────────────────────────────
     function showTab(name) {
       document.querySelectorAll('.tab-btn').forEach((b, i) => {
-        b.classList.toggle('active', ['decode','verify','generate'][i] === name);
+        b.classList.toggle('active', ['decode','verify','generate','history'][i] === name);
       });
       document.querySelectorAll('.tab-panel').forEach(p => {
         p.classList.toggle('active', p.id === 'tab-' + name);
       });
+      if (name === 'history') renderHistory();
     }
 
     function clearAll(tab) {
-      document.getElementById('decode-input').value = '';
-      document.getElementById('decode-result').style.display = 'none';
-      document.getElementById('decode-error').style.display = 'none';
+      if (tab === 'decode') {
+        document.getElementById('decode-input').value = '';
+        document.getElementById('decode-result').style.display = 'none';
+        document.getElementById('decode-error').style.display = 'none';
+        stopCountdown();
+      }
+    }
+
+    // ── Fortaleza del secret ──────────────────────────────────────────────────
+    function getSecretStrength(secret) {
+      if (!secret) return null;
+      if (secret.length < 8 || WEAK_SECRETS.includes(secret.toLowerCase())) return 'weak';
+      if (secret.length < 16 || !/[A-Z]/.test(secret) || !/[0-9]/.test(secret)) return 'medium';
+      return 'strong';
+    }
+
+    function updateSecretStrength(inputId, displayId) {
+      const secret = document.getElementById(inputId).value;
+      const el = document.getElementById(displayId);
+      if (!secret) { el.style.display = 'none'; return; }
+      const strength = getSecretStrength(secret);
+      const labels = { weak: 'Debil', medium: 'Media', strong: 'Fuerte' };
+      el.style.display = 'flex';
+      el.className = `secret-strength strength-${strength}`;
+      el.querySelector('.strength-label').textContent = labels[strength];
+    }
+
+    // ── Countdown hasta expiración ────────────────────────────────────────────
+    function stopCountdown() {
+      if (countdownInterval) { clearInterval(countdownInterval); countdownInterval = null; }
+    }
+
+    function startCountdown(exp) {
+      stopCountdown();
+      const el = document.getElementById('exp-countdown');
+      if (!exp) { el.innerHTML = ''; return; }
+
+      function update() {
+        const now = Math.floor(Date.now() / 1000);
+        const diff = exp - now;
+        const badge = el.querySelector('.countdown-badge') || document.createElement('span');
+        badge.className = 'countdown-badge';
+        if (diff <= 0) {
+          badge.className = 'countdown-badge expired';
+          badge.textContent = 'Token expirado';
+          stopCountdown();
+        } else {
+          const d = Math.floor(diff / 86400);
+          const h = Math.floor((diff % 86400) / 3600);
+          const m = Math.floor((diff % 3600) / 60);
+          const s = diff % 60;
+          badge.className = diff < 300 ? 'countdown-badge expiring' : 'countdown-badge';
+          if (d > 0) badge.textContent = `Expira en: ${d}d ${h}h ${m}m`;
+          else if (h > 0) badge.textContent = `Expira en: ${h}h ${m}m ${s}s`;
+          else badge.textContent = `Expira en: ${m}m ${s}s`;
+        }
+        if (!el.querySelector('.countdown-badge')) el.appendChild(badge);
+      }
+      update();
+      countdownInterval = setInterval(update, 1000);
+    }
+
+    // ── Analisis de vulnerabilidades ──────────────────────────────────────────
+    function analyzeVulnerabilities(header, payload, token) {
+      const vulns = [];
+      const alg = (header.alg || '').toUpperCase();
+
+      // alg:none — critico
+      if (alg === 'NONE' || alg === '') {
+        vulns.push({
+          level: 'high',
+          title: 'Algoritmo "none" — sin firma',
+          desc: 'El token no tiene firma. Cualquier servidor que acepte alg:none puede ser comprometido con payloads arbitrarios.'
+        });
+      }
+
+      // Algoritmos debiles
+      if (alg === 'HS256' && payload.exp && (payload.exp - (payload.iat || 0)) > 86400 * 30) {
+        vulns.push({
+          level: 'low',
+          title: 'Vida util muy larga',
+          desc: 'El token expira en mas de 30 dias. Tokens de larga duracion aumentan el riesgo si son robados.'
+        });
+      }
+
+      // Sin expiracion
+      if (!payload.exp) {
+        vulns.push({
+          level: 'medium',
+          title: 'Sin campo exp (expiracion)',
+          desc: 'El token nunca expira. Se recomienda siempre incluir exp para limitar la ventana de ataque.'
+        });
+      }
+
+      // Sin iss
+      if (!payload.iss) {
+        vulns.push({
+          level: 'low',
+          title: 'Sin campo iss (emisor)',
+          desc: 'No se especifica quien emitio el token. Sin iss, es mas dificil validar la fuente del token.'
+        });
+      }
+
+      // Sin aud
+      if (!payload.aud) {
+        vulns.push({
+          level: 'low',
+          title: 'Sin campo aud (audiencia)',
+          desc: 'Sin aud, el token puede ser usado en cualquier servicio que comparta el mismo secret.'
+        });
+      }
+
+      // Informacion sensible en payload
+      const sensitiveKeys = ['password', 'passwd', 'pwd', 'secret', 'credit_card', 'ssn', 'cvv', 'pin'];
+      const payloadKeys = Object.keys(payload).map(k => k.toLowerCase());
+      const found = sensitiveKeys.filter(k => payloadKeys.includes(k));
+      if (found.length > 0) {
+        vulns.push({
+          level: 'high',
+          title: `Datos sensibles en payload: ${found.join(', ')}`,
+          desc: 'El payload del JWT es solo base64 — NO esta cifrado. No incluyas passwords, secretos ni datos sensibles.'
+        });
+      }
+
+      // RS256 con clave pequeña detectada por longitud del token
+      if ((alg === 'RS256' || alg === 'RS384' || alg === 'RS512')) {
+        vulns.push({
+          level: 'low',
+          title: 'Algoritmo RSA — verificar longitud de clave',
+          desc: 'Usa claves RSA de minimo 2048 bits. Claves de 512/1024 bits son vulnerables a factorizacion.'
+        });
+      }
+
+      // alg confusion: HS256 con "rsa" en claims
+      if (alg.startsWith('HS') && (payload.iss || '').toLowerCase().includes('rsa')) {
+        vulns.push({
+          level: 'medium',
+          title: 'Posible confusion de algoritmo',
+          desc: 'El iss sugiere uso de RSA pero el alg es HMAC. Verifica que el servidor valide correctamente el algoritmo esperado.'
+        });
+      }
+
+      return vulns;
+    }
+
+    function renderVulnerabilities(vulns) {
+      if (vulns.length === 0) {
+        return '<p class="no-vulns">Sin vulnerabilidades obvias detectadas en la estructura del token.</p>';
+      }
+      const icons = { high: '🔴', medium: '🟡', low: '🔵' };
+      return '<ul class="vuln-list">' + vulns.map(v =>
+        `<li class="vuln-item vuln-${escapeHtml(v.level)}">
+          <span class="vuln-icon">${icons[v.level]}</span>
+          <div>
+            <div class="vuln-title">${escapeHtml(v.title)}</div>
+            <div class="vuln-desc">${escapeHtml(v.desc)}</div>
+          </div>
+        </li>`
+      ).join('') + '</ul>';
     }
 
     // ── Decodificar ──────────────────────────────────────────────────────────
@@ -381,7 +669,7 @@
 
       const parts = token.split('.');
       if (parts.length !== 3) {
-        errEl.textContent = `JWT inválido: debe tener 3 partes separadas por punto (encontradas: ${parts.length}).`;
+        errEl.textContent = `JWT invalido: debe tener 3 partes separadas por punto (encontradas: ${parts.length}).`;
         errEl.style.display = 'block'; return;
       }
 
@@ -389,7 +677,7 @@
       const payload = safeBase64urlDecodeJSON(parts[1]);
 
       if (!header || !payload) {
-        errEl.textContent = 'Error al decodificar: header o payload no son JSON válido.';
+        errEl.textContent = 'Error al decodificar: header o payload no son JSON valido.';
         errEl.style.display = 'block'; return;
       }
 
@@ -401,15 +689,26 @@
       const now = Math.floor(Date.now() / 1000);
       const statusEl = document.getElementById('decode-status');
       if (payload.exp && payload.exp < now) {
-        statusEl.innerHTML = '<div class="status-badge status-invalid">⚠️ Token expirado</div>';
+        statusEl.innerHTML = '<div class="status-badge status-invalid">Token expirado</div>';
+      } else if (payload.nbf && payload.nbf > now) {
+        statusEl.innerHTML = '<div class="status-badge status-no-sig">Aun no valido (nbf en el futuro) — sin verificar firma</div>';
       } else {
-        statusEl.innerHTML = '<div class="status-badge status-no-sig">ℹ️ Decodificado sin verificar firma</div>';
+        statusEl.innerHTML = '<div class="status-badge status-no-sig">Decodificado sin verificar firma</div>';
       }
 
       // Claims tabla
       document.getElementById('claims-view').innerHTML = buildClaimsTable(payload);
 
-      // Encoded colorized
+      // Countdown
+      startCountdown(payload.exp || null);
+
+      // Vulnerabilidades
+      const vulns = analyzeVulnerabilities(header, payload, token);
+      document.getElementById('vuln-view').innerHTML = renderVulnerabilities(vulns);
+
+      // Guardar en historial
+      saveToHistory(token, header, payload);
+
       resEl.style.display = 'block';
     }
 
@@ -417,37 +716,44 @@
       const now = Math.floor(Date.now() / 1000);
       const knownClaims = {
         sub: 'Subject (sujeto)', iss: 'Issuer (emisor)', aud: 'Audience (audiencia)',
-        exp: 'Expiration (expiración)', nbf: 'Not Before (no antes de)', iat: 'Issued At (emitido)',
-        jti: 'JWT ID', name: 'Nombre', email: 'Email', role: 'Rol', roles: 'Roles'
+        exp: 'Expiration (expiracion)', nbf: 'Not Before (no antes de)', iat: 'Issued At (emitido)',
+        jti: 'JWT ID', name: 'Nombre', email: 'Email', role: 'Rol', roles: 'Roles',
+        scope: 'Scope (permisos)', azp: 'Authorized party', nonce: 'Nonce'
       };
       let rows = '';
       for (const [k, v] of Object.entries(payload)) {
-        const desc = knownClaims[k] || k;
-        let valStr = typeof v === 'object' ? JSON.stringify(v) : String(v);
+        const desc = knownClaims[k] || escapeHtml(k);
+        let valStr = '';
         let cls = '';
         if ((k === 'exp' || k === 'nbf' || k === 'iat') && typeof v === 'number') {
           const d = new Date(v * 1000).toLocaleString('es-MX');
           if (k === 'exp') {
             cls = v < now ? 'expired' : 'valid-time';
-            valStr = `${v} → ${d} ${v < now ? '(EXPIRADO)' : '(válido)'}`;
+            valStr = `${escapeHtml(String(v))} → ${escapeHtml(d)} ${v < now ? '(EXPIRADO)' : '(valido)'}`;
+          } else if (k === 'nbf') {
+            cls = v > now ? 'nbf-warn' : '';
+            valStr = `${escapeHtml(String(v))} → ${escapeHtml(d)} ${v > now ? '(aun no valido)' : ''}`;
           } else {
-            valStr = `${v} → ${d}`;
+            valStr = `${escapeHtml(String(v))} → ${escapeHtml(d)}`;
           }
+        } else {
+          const raw = typeof v === 'object' ? JSON.stringify(v) : String(v);
+          valStr = escapeHtml(raw);
         }
-        rows += `<tr><td><code>${k}</code></td><td>${desc}</td><td class="${cls}">${valStr}</td></tr>`;
+        rows += `<tr><td><code>${escapeHtml(k)}</code></td><td>${desc}</td><td class="${cls}">${valStr}</td></tr>`;
       }
       return `<table class="claim-table">
-        <thead><tr><th>Claim</th><th>Descripción</th><th>Valor</th></tr></thead>
+        <thead><tr><th>Claim</th><th>Descripcion</th><th>Valor</th></tr></thead>
         <tbody>${rows}</tbody>
       </table>`;
     }
 
     function loadExample() {
-      // JWT válido de ejemplo (HS256, secret: "secret")
+      // JWT valido de ejemplo (HS256, secret: "secret")
       document.getElementById('decode-input').value =
         'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.' +
-        'eyJzdWIiOiJ1c2VyXzEyMyIsIm5hbWUiOiJKdWFuIFDDqXJleiIsInJvbGUiOiJhZG1pbiIsImlhdCI6MTcxMzAwMDAwMCwiZXhwIjoxNzEzMDg2NDAwfQ.' +
-        'SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c';
+        'eyJzdWIiOiJ1c2VyXzEyMyIsIm5hbWUiOiJKdWFuIFDDqXJleiIsInJvbGUiOiJhZG1pbiIsImlhdCI6MTcxMzAwMDAwMCwiZXhwIjo0MDAwMDAwMDAwfQ.' +
+        'sBvV2rT-YxhRz2oiL-WLIJRLvGnYOjPMBHjQGCRU7WM';
       decodeJWT();
     }
 
@@ -464,7 +770,7 @@
       if (!secret) { errEl.textContent = 'Ingresa la clave secreta.'; errEl.style.display = 'block'; return; }
 
       const parts = token.split('.');
-      if (parts.length !== 3) { errEl.textContent = 'JWT inválido.'; errEl.style.display = 'block'; return; }
+      if (parts.length !== 3) { errEl.textContent = 'JWT invalido.'; errEl.style.display = 'block'; return; }
 
       const header = safeBase64urlDecodeJSON(parts[0]);
       const payload = safeBase64urlDecodeJSON(parts[1]);
@@ -474,32 +780,45 @@
       const statusEl = document.getElementById('verify-status');
       const claimsEl = document.getElementById('verify-claims');
 
+      // Rechazar alg:none explicitamente
+      if (!alg || alg.toUpperCase() === 'NONE') {
+        statusEl.innerHTML = '<div class="status-badge status-invalid">Rechazado — alg:none no permitido</div>';
+        claimsEl.innerHTML = buildClaimsTable(payload);
+        resEl.style.display = 'block';
+        return;
+      }
+
       try {
         let valid = false;
         if (alg === 'HS256' || alg === 'HS384' || alg === 'HS512') {
           valid = await verifyHMAC(parts[0] + '.' + parts[1], parts[2], secret, alg);
         } else if (alg === 'RS256' || alg === 'RS384' || alg === 'RS512') {
           valid = await verifyRSA(parts[0] + '.' + parts[1], parts[2], secret, alg);
+        } else if (alg === 'ES256' || alg === 'ES384' || alg === 'ES512') {
+          valid = await verifyECDSA(parts[0] + '.' + parts[1], parts[2], secret, alg);
         } else {
-          errEl.textContent = `Algoritmo '${alg}' no soportado para verificación en el navegador.`;
+          errEl.textContent = `Algoritmo '${escapeHtml(alg)}' no soportado para verificacion en el navegador.`;
           errEl.style.display = 'block'; return;
         }
 
         const now = Math.floor(Date.now() / 1000);
         const expired = payload.exp && payload.exp < now;
+        const notYetValid = payload.nbf && payload.nbf > now;
 
-        if (valid && !expired) {
-          statusEl.innerHTML = '<div class="status-badge status-valid">✅ Firma válida — Token auténtico</div>';
+        if (valid && !expired && !notYetValid) {
+          statusEl.innerHTML = '<div class="status-badge status-valid">Firma valida — Token autentico</div>';
         } else if (valid && expired) {
-          statusEl.innerHTML = '<div class="status-badge status-invalid">⚠️ Firma válida pero TOKEN EXPIRADO</div>';
+          statusEl.innerHTML = '<div class="status-badge status-invalid">Firma valida pero TOKEN EXPIRADO</div>';
+        } else if (valid && notYetValid) {
+          statusEl.innerHTML = '<div class="status-badge status-no-sig">Firma valida pero token aun no es valido (nbf)</div>';
         } else {
-          statusEl.innerHTML = '<div class="status-badge status-invalid">❌ Firma inválida — Token no auténtico</div>';
+          statusEl.innerHTML = '<div class="status-badge status-invalid">Firma invalida — Token no autentico</div>';
         }
 
         claimsEl.innerHTML = buildClaimsTable(payload);
         resEl.style.display = 'block';
       } catch(e) {
-        errEl.textContent = 'Error al verificar: ' + e.message;
+        errEl.textContent = 'Error al verificar: ' + escapeHtml(e.message);
         errEl.style.display = 'block';
       }
     }
@@ -526,8 +845,32 @@
         { name: 'RSASSA-PKCS1-v1_5', hash: hashMap[alg] },
         false, ['verify']
       );
-      const sigBytes = Uint8Array.from(atob(signature.replace(/-/g,'+').replace(/_/g,'/')), c => c.charCodeAt(0));
+      const sigBytes = Uint8Array.from(
+        atob(signature.replace(/-/g,'+').replace(/_/g,'/')),
+        c => c.charCodeAt(0)
+      );
       return crypto.subtle.verify('RSASSA-PKCS1-v1_5', key, sigBytes, new TextEncoder().encode(signingInput));
+    }
+
+    async function verifyECDSA(signingInput, signature, pemKey, alg) {
+      const hashMap = { ES256: 'SHA-256', ES384: 'SHA-384', ES512: 'SHA-512' };
+      const curveMap = { ES256: 'P-256', ES384: 'P-384', ES512: 'P-521' };
+      const pemBody = pemKey.replace(/-----[^-]+-----/g, '').replace(/\s/g, '');
+      const der = Uint8Array.from(atob(pemBody), c => c.charCodeAt(0));
+      const key = await crypto.subtle.importKey(
+        'spki', der.buffer,
+        { name: 'ECDSA', namedCurve: curveMap[alg] },
+        false, ['verify']
+      );
+      // Convertir firma DER a raw para Web Crypto
+      const sigBytes = Uint8Array.from(
+        atob(signature.replace(/-/g,'+').replace(/_/g,'/')),
+        c => c.charCodeAt(0)
+      );
+      return crypto.subtle.verify(
+        { name: 'ECDSA', hash: hashMap[alg] },
+        key, sigBytes, new TextEncoder().encode(signingInput)
+      );
     }
 
     // ── Generar JWT ──────────────────────────────────────────────────────────
@@ -542,10 +885,14 @@
       resEl.style.display = 'none';
 
       if (!secret) { errEl.textContent = 'Ingresa una clave secreta.'; errEl.style.display = 'block'; return; }
+      if (secret.length < 8) {
+        errEl.textContent = 'La clave secreta debe tener al menos 8 caracteres.';
+        errEl.style.display = 'block'; return;
+      }
 
       let claims;
       try { claims = JSON.parse(claimsRaw); }
-      catch(e) { errEl.textContent = 'Claims JSON inválido: ' + e.message; errEl.style.display = 'block'; return; }
+      catch(e) { errEl.textContent = 'Claims JSON invalido: ' + escapeHtml(e.message); errEl.style.display = 'block'; return; }
 
       const now = Math.floor(Date.now() / 1000);
       claims.iat = now;
@@ -576,11 +923,15 @@
         document.getElementById('gen-header-view').innerHTML  = colorizeJSON(header);
         document.getElementById('gen-payload-view').innerHTML = colorizeJSON(claims);
 
-        // Guardar para copiar
+        // Guardar token para copiar y usar en otros tabs
         document.getElementById('gen-token-display').dataset.token = token;
+        document.getElementById('gen-token-display').dataset.secret = secret;
         resEl.style.display = 'block';
+
+        // Guardar en historial
+        saveToHistory(token, header, claims);
       } catch(e) {
-        errEl.textContent = 'Error al generar: ' + e.message;
+        errEl.textContent = 'Error al generar: ' + escapeHtml(e.message);
         errEl.style.display = 'block';
       }
     }
@@ -590,11 +941,124 @@
       if (token) {
         navigator.clipboard.writeText(token).then(() => {
           const btn = document.querySelector('.copy-btn');
-          btn.textContent = '✓ Copiado';
+          btn.textContent = 'Copiado!';
           setTimeout(() => btn.textContent = 'Copiar', 2000);
+        }).catch(() => {
+          // Fallback para navegadores sin clipboard API
+          const ta = document.createElement('textarea');
+          ta.value = token;
+          document.body.appendChild(ta);
+          ta.select();
+          document.execCommand('copy');
+          document.body.removeChild(ta);
         });
       }
     }
+
+    function sendToDecoder() {
+      const token = document.getElementById('gen-token-display').dataset.token;
+      if (token) {
+        document.getElementById('decode-input').value = token;
+        showTab('decode');
+        decodeJWT();
+      }
+    }
+
+    function sendToVerify() {
+      const token = document.getElementById('gen-token-display').dataset.token;
+      const secret = document.getElementById('gen-token-display').dataset.secret;
+      if (token) {
+        document.getElementById('verify-token').value = token;
+        if (secret) document.getElementById('verify-secret').value = secret;
+        showTab('verify');
+      }
+    }
+
+    // ── Historial ─────────────────────────────────────────────────────────────
+    function saveToHistory(token, header, payload) {
+      try {
+        const history = getHistory();
+        // Evitar duplicados (mismo token)
+        const exists = history.findIndex(h => h.token === token);
+        if (exists !== -1) history.splice(exists, 1);
+
+        history.unshift({
+          token,
+          alg: header.alg || 'unknown',
+          sub: payload.sub || payload.name || payload.email || '',
+          exp: payload.exp || null,
+          iat: payload.iat || null,
+          savedAt: Date.now()
+        });
+
+        // Limitar a MAX_HISTORY items
+        if (history.length > MAX_HISTORY) history.splice(MAX_HISTORY);
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(history));
+      } catch(e) {
+        // localStorage puede no estar disponible
+      }
+    }
+
+    function getHistory() {
+      try {
+        return JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
+      } catch { return []; }
+    }
+
+    function clearHistory() {
+      localStorage.removeItem(STORAGE_KEY);
+      renderHistory();
+    }
+
+    function renderHistory() {
+      const history = getHistory();
+      const el = document.getElementById('history-list');
+      if (history.length === 0) {
+        el.innerHTML = '<div class="empty-history"><p>No hay tokens en el historial.</p><p style="margin-top:6px;font-size:0.82rem">Decodifica o genera un JWT para que aparezca aqui.</p></div>';
+        return;
+      }
+      const now = Math.floor(Date.now() / 1000);
+      el.innerHTML = history.map((item, i) => {
+        const expStr = item.exp
+          ? (item.exp < now ? '<span style="color:var(--red)">Expirado</span>' : `<span style="color:var(--green)">Exp: ${new Date(item.exp * 1000).toLocaleString('es-MX')}</span>`)
+          : '<span style="color:var(--text-dim)">Sin exp</span>';
+        const savedStr = new Date(item.savedAt).toLocaleTimeString('es-MX');
+        const shortToken = item.token.length > 80 ? item.token.slice(0, 80) + '...' : item.token;
+        return `<div class="history-item" onclick="loadFromHistory(${i})" title="Click para decodificar">
+          <div class="history-token">${escapeHtml(shortToken)}</div>
+          <div class="history-meta">
+            <span class="history-alg">${escapeHtml(item.alg)}</span>
+            ${item.sub ? `<span class="history-sub">${escapeHtml(String(item.sub))}</span>` : ''}
+            ${expStr}
+            <span>Guardado: ${savedStr}</span>
+          </div>
+        </div>`;
+      }).join('');
+    }
+
+    function loadFromHistory(index) {
+      const history = getHistory();
+      const item = history[index];
+      if (!item) return;
+      document.getElementById('decode-input').value = item.token;
+      showTab('decode');
+      decodeJWT();
+    }
+
+    // ── Verificar secret en tab verify ────────────────────────────────────────
+    document.addEventListener('DOMContentLoaded', () => {
+      const verifySecretInput = document.getElementById('verify-secret');
+      verifySecretInput.addEventListener('input', () => {
+        const val = verifySecretInput.value;
+        const el = document.getElementById('verify-secret-strength');
+        if (!val || val.includes('BEGIN')) { el.style.display = 'none'; return; }
+        const strength = getSecretStrength(val);
+        const labels = { weak: 'Debil', medium: 'Media', strong: 'Fuerte' };
+        el.style.display = 'flex';
+        el.className = `secret-strength strength-${strength}`;
+        el.querySelector('.strength-label').textContent = labels[strength];
+      });
+    });
   </script>
 </body>
 </html>

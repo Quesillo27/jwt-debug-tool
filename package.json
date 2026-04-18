@@ -1,0 +1,31 @@
+{
+  "name": "jwt-debug-tool",
+  "version": "1.1.0",
+  "description": "Herramienta web para decodificar, verificar y generar JWTs — 100% en el navegador",
+  "scripts": {
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
+    "serve": "python3 -m http.server 8080"
+  },
+  "devDependencies": {
+    "@vitest/coverage-v8": "^1.6.0",
+    "vitest": "^1.6.0"
+  },
+  "keywords": [
+    "jwt",
+    "json-web-token",
+    "debug",
+    "decode",
+    "verify",
+    "browser"
+  ],
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Quesillo27/jwt-debug-tool"
+  },
+  "dependencies": {
+    "jsdom": "^29.0.2"
+  }
+}
