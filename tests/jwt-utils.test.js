@@ -10,6 +10,7 @@ import {
   formatTimeToExpiry,
   truncateToken,
   parseTimestampClaims,
+  prepareGeneratedClaims,
 } from '../src/jwt-utils.js';
 
 // ── base64urlDecode ────────────────────────────────────────────────────────
@@ -344,5 +345,48 @@ describe('parseTimestampClaims', () => {
   it('detecta presencia de iat', () => {
     const result = parseTimestampClaims({ iat: 1713000000 });
     expect(result.hasIat).toBe(true);
+  });
+});
+
+// ── prepareGeneratedClaims ────────────────────────────────────────────────
+describe('prepareGeneratedClaims', () => {
+  it('agrega iat y exp por defecto cuando no existen', () => {
+    const prepared = prepareGeneratedClaims({ sub: 'user_1' }, 1713000000, 3600);
+    expect(prepared).toEqual({
+      sub: 'user_1',
+      iat: 1713000000,
+      exp: 1713003600,
+    });
+  });
+
+  it('respeta iat y exp personalizados', () => {
+    const prepared = prepareGeneratedClaims(
+      { sub: 'user_1', iat: 1700000000, exp: 1700003600 },
+      1713000000,
+      3600
+    );
+    expect(prepared.iat).toBe(1700000000);
+    expect(prepared.exp).toBe(1700003600);
+  });
+
+  it('acepta nbf numerico personalizado', () => {
+    const prepared = prepareGeneratedClaims({ sub: 'user_1', nbf: 1713000300 }, 1713000000, 0);
+    expect(prepared.nbf).toBe(1713000300);
+    expect(prepared.iat).toBe(1713000000);
+    expect(prepared.exp).toBeUndefined();
+  });
+
+  it('rechaza claims que no son objeto JSON', () => {
+    expect(() => prepareGeneratedClaims([], 1713000000, 3600)).toThrow(/objeto JSON/);
+    expect(() => prepareGeneratedClaims(null, 1713000000, 3600)).toThrow(/objeto JSON/);
+  });
+
+  it('rechaza claims de tiempo no numericos', () => {
+    expect(() => prepareGeneratedClaims({ exp: 'tomorrow' }, 1713000000, 3600)).toThrow(/Claim exp/);
+    expect(() => prepareGeneratedClaims({ nbf: -1 }, 1713000000, 3600)).toThrow(/Claim nbf/);
+  });
+
+  it('rechaza nbf mayor o igual que exp', () => {
+    expect(() => prepareGeneratedClaims({ nbf: 1713003600, exp: 1713003600 }, 1713000000, 0)).toThrow(/nbf/);
   });
 });

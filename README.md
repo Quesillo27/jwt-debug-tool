@@ -50,7 +50,7 @@ O simplemente haz clic en **"Cargar ejemplo"** dentro de la herramienta.
 |-----|-------------|
 | **Decodificar** | Muestra header, payload y signature con syntax highlighting. Tabla de claims con descripciones y timestamps legibles. Detecta tokens expirados y nbf en el futuro. |
 | **Verificar firma** | Verifica HS256/384/512, RS256/384/512 y ES256/384/512 usando la Web Crypto API. Rechaza explicitamente alg:none. |
-| **Generar JWT** | Genera tokens firmados con HS256/384/512. Claims personalizables en JSON. Expiracion configurable (15 min a 30 dias). |
+| **Generar JWT** | Genera tokens firmados con HS256/384/512. Claims personalizables en JSON. Expiracion configurable (15 min a 30 dias) y respeta `iat`/`exp`/`nbf` si ya vienen definidos. |
 | **Historial** | Ultimos 10 tokens decodificados/generados guardados en localStorage. Click para cargar rapidamente. |
 
 ### Funciones adicionales
@@ -64,6 +64,7 @@ O simplemente haz clic en **"Cargar ejemplo"** dentro de la herramienta.
 - **Countdown en tiempo real** — cuenta regresiva hasta que expira el token (actualiza cada segundo)
 - **Indicador de fortaleza del secret** — barra visual (debil / media / fuerte)
 - **Enviar a otro tab** — desde Generar puedes abrir el token directamente en Decodificar o Verificar
+- **Validacion de claims del generador** — el payload debe ser un objeto JSON y los claims `iat`/`exp`/`nbf` deben ser timestamps UNIX numericos
 
 ## Algoritmos soportados
 
@@ -87,7 +88,7 @@ npm test              # 53 tests (Vitest)
 npm run test:coverage # con reporte de cobertura
 ```
 
-Los tests cubren: decodificacion base64url, sanitizacion XSS, validacion de estructura JWT, fortaleza de secrets, analisis de vulnerabilidades, countdown de expiracion y manejo de claims de tiempo.
+Los tests cubren: decodificacion base64url, sanitizacion XSS, validacion de estructura JWT, fortaleza de secrets, analisis de vulnerabilidades, countdown de expiracion, manejo de claims de tiempo y validacion de claims del generador.
 
 ## Privacidad
 

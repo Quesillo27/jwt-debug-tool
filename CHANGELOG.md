@@ -3,6 +3,16 @@
 Todos los cambios notables de este proyecto estan documentados aqui.
 Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.0.0/).
 
+## [1.1.1] — 2026-04-28
+
+### Corregido
+- **Generador JWT**: ahora valida que el payload sea un objeto JSON antes de firmar
+- **Claims temporales personalizados**: el generador respeta `iat`, `exp` y `nbf` si ya fueron definidos manualmente en el JSON
+- **Validacion de NumericDate**: `iat`, `exp` y `nbf` deben ser timestamps UNIX numericos; si `nbf >= exp` se muestra un error util
+
+### Mejorado
+- **Cobertura de tests**: se agregaron casos para claims personalizados y errores de validacion del generador
+
 ## [1.1.0] — 2026-04-18
 
 ### Agregado

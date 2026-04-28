@@ -147,3 +147,28 @@ export function parseTimestampClaims(payload) {
     hasNbf:      Boolean(payload.nbf),
   };
 }
+
+// ── Preparar claims para el generador ──────────────────────────────────────
+
+export function prepareGeneratedClaims(claims, now, expSec) {
+  if (!claims || typeof claims !== 'object' || Array.isArray(claims)) {
+    throw new Error('Claims debe ser un objeto JSON.');
+  }
+
+  const prepared = { ...claims };
+
+  for (const key of ['iat', 'exp', 'nbf']) {
+    if (key in prepared && (!Number.isInteger(prepared[key]) || prepared[key] < 0)) {
+      throw new Error(`Claim ${key} debe ser un timestamp UNIX numerico.`);
+    }
+  }
+
+  if (!('iat' in prepared)) prepared.iat = now;
+  if (expSec > 0 && !('exp' in prepared)) prepared.exp = now + expSec;
+
+  if ('nbf' in prepared && 'exp' in prepared && prepared.nbf >= prepared.exp) {
+    throw new Error('Claim nbf debe ser menor que exp.');
+  }
+
+  return prepared;
+}
